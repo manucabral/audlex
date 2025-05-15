@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "app/generated/prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model audiencias {
+  id          Int                  @id @default(autoincrement())
+  caratula    String               @db.VarChar(255)
+  demandado   String               @db.VarChar(255)
+  fecha       DateTime             @db.Date
+  hora        DateTime             @db.Time(0)
+  juzgado     Int
+  modalidad   audiencias_modalidad @default(presencial)
+  estado      audiencias_estado    @default(vigente)
+  usuarioId   Int
+  detalles    String?              @db.Text
+  informacion String?              @db.Text
+}
+
+model seclos {
+  id                 Int      @id @default(autoincrement())
+  caratula           String   @db.VarChar(255)
+  expediente         String   @db.VarChar(100)
+  usuarioId          Int
+  fecha              DateTime @default(dbgenerated("(curdate())")) @db.Date
+  hora               DateTime @default(dbgenerated("(curtime())")) @db.Time(0)
+  conciliador        String   @db.VarChar(255)
+  celularConciliador String   @db.VarChar(20)
+  emailConciliador   String   @db.VarChar(255)
+  numero             Int      @default(1)
+  hayActa            Boolean  @default(false)
+}
+
+model testigos {
+  id          Int     @id @default(autoincrement())
+  nombre      String  @db.VarChar(255)
+  apellido    String  @db.VarChar(255)
+  celular     String  @db.VarChar(20)
+  email       String  @db.VarChar(255)
+  audienciaId Int
+  BR          Boolean @default(false)
+  dificil     Boolean @default(false)
+}
+
+model usuarios {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique(map: "idx_nombre") @db.VarChar(255)
+  hash   String @db.VarChar(255)
+  level  Int
+}
+
+enum audiencias_modalidad {
+  virtual
+  semipresencial
+  presencial
+}
+
+enum audiencias_estado {
+  terminado
+  vigente
+  reprogramado
+}
