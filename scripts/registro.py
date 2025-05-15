@@ -1,4 +1,3 @@
-
 """
 Debido a que AudLex no contiene sistema de registro de usuarios,
 este script se encarga de registrar usuarios en la base de datos
@@ -56,20 +55,25 @@ def registrar_usuario(nombre: str, contra: str, nivel: int = 1) -> Tuple[bool, s
         return False, "Error de conexión a la base de datos."
 
     try:
-        with conexion:
-            with conexion.cursor(buffered=True) as cursor:
-                cursor.execute("SELECT id FROM usuarios WHERE nombre = %s", (nombre,))
-                if cursor.fetchone():
-                    return False, "El nombre de usuario ya existe."
-                salt = bcrypt.gensalt()
-                hash_pw = bcrypt.hashpw(contra.encode("utf-8"), salt).decode("utf-8")
-                cursor.execute(
-                    "INSERT INTO usuarios (nombre, hash, level) VALUES (%s, %s, %s)",
-                    (nombre, hash_pw, nivel)
-                )
-        return True, f"Usuario '{nombre}' registrado exitosamente."
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id FROM usuarios WHERE nombre = %s", (nombre,))
+        if cursor.fetchone():
+            cursor.close()
+            return False, "El nombre de usuario ya existe."
+        salt = bcrypt.gensalt()
+        hash_pw = bcrypt.hashpw(contra.encode("utf-8"), salt).decode("utf-8")
+        cursor.execute(
+            "INSERT INTO usuarios (nombre, hash, nivel) VALUES (%s, %s, %s)",
+            (nombre, hash_pw, nivel),
+        )
+        conexion.commit()
+        new_id = cursor.lastrowid
+        cursor.close()
+        return True, f"Usuario '{nombre}' registrado exitosamente con ID {new_id}."
     except Error as e:
         return False, f"Error al registrar usuario: {e}"
+    finally:
+        conexion.close()
 
 
 def main():
