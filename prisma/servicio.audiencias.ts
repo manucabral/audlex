@@ -2,16 +2,26 @@ import { PrismaClient, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-type FiltroAudiencia = {
+type AudienciaBase = {
+  usuario: string;
+  caratula: string;
+  modalidad: "virtual" | "semipresencial" | "presencial";
+  estado: "vigente" | "terminado" | "reprogramado";
+  demandado: string;
+  juzgado: number;
+};
+
+export type FiltroAudiencia = Partial<AudienciaBase> & {
   fechaDesde?: Date;
   fechaHasta?: Date;
-  usuario?: string;
   testigo?: string;
-  modalidad?: "virtual" | "semipresencial" | "presencial";
-  estado?: "terminado" | "vigente" | "reprogramado";
-  demandado?: string;
-  caratula?: string;
-  juzgado?: number;
+};
+
+export type Audiencia = AudienciaBase & {
+  id: number;
+  fecha: string;
+  detalles?: string;
+  informacion?: string;
 };
 
 async function obtenerAudiencias(filtros: FiltroAudiencia) {
@@ -23,7 +33,7 @@ async function obtenerAudiencias(filtros: FiltroAudiencia) {
   if (filtros.usuario)
     clauses.push(Prisma.sql`u.nombre LIKE ${`%${filtros.usuario}%`}`);
   if (filtros.testigo)
-    clauses.push(Prisma.sql`t.testigo LIKE ${`%${filtros.testigo}%`}`);
+    clauses.push(Prisma.sql`t.nombre LIKE ${`%${filtros.testigo}%`}`);
   if (filtros.modalidad)
     clauses.push(Prisma.sql`a.modalidad = ${filtros.modalidad}`);
   if (filtros.estado) clauses.push(Prisma.sql`a.estado = ${filtros.estado}`);
@@ -47,12 +57,12 @@ async function obtenerAudiencias(filtros: FiltroAudiencia) {
       a.informacion
     FROM audiencias a
     LEFT JOIN usuarios u ON a.usuarioId = u.id
-    LEFT JOIN testigos t ON t.audienciaId = a.id
+    LEFT JOIN testigos t ON a.id = t.audienciaId
     WHERE ${Prisma.join(clauses, " AND ")}
     ORDER BY a.fecha ASC
   `;
   try {
-    return await prisma.$queryRaw<typeof query>(query);
+    return await prisma.$queryRaw<Audiencia[]>(query);
   } catch (error) {
     console.error("Al obtener audiencias:", error);
     throw new Error("Error al obtener audiencias");

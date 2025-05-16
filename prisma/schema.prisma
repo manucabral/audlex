@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "app/generated/prisma/client"
 }
 
 datasource db {
@@ -20,6 +19,16 @@ model audiencias {
   usuarioId   Int
   detalles    String?              @db.Text
   informacion String?              @db.Text
+}
+
+model intentos {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  ip        String   @db.VarChar(45)
+  ok        Boolean  @default(false)
+  fecha     DateTime @default(now()) @db.DateTime(0)
+
+  @@index([usuarioId], map: "idx_usuario")
 }
 
 model seclos {
@@ -49,9 +58,9 @@ model testigos {
 
 model usuarios {
   id     Int    @id @default(autoincrement())
-  nombre String @unique(map: "idx_nombre") @db.VarChar(255)
+  nombre String @unique(map: "nombre") @db.VarChar(255)
   hash   String @db.VarChar(255)
-  level  Int
+  nivel  Int    @default(1)
 }
 
 enum audiencias_modalidad {
