@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -222,7 +223,7 @@ export default function ListaAudiencias({
                 </tr>
               ) : (
                 sortedAudiencias.map((audiencia) => (
-                  <>
+                  <React.Fragment key={audiencia.id}>
                     <tr
                       key={audiencia.id}
                       onClick={() => toggleExpand(audiencia.id || 0)}
@@ -480,7 +481,7 @@ export default function ListaAudiencias({
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 ))
               )}
             </tbody>
