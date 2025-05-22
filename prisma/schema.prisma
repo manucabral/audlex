@@ -11,14 +11,15 @@ model audiencias {
   id          Int                  @id @default(autoincrement())
   caratula    String               @db.VarChar(255)
   demandado   String               @db.VarChar(255)
-  fecha       DateTime             @db.Date
-  hora        DateTime             @db.Time(0)
+  fecha       DateTime             @db.DateTime(0)
   juzgado     Int
   modalidad   audiencias_modalidad @default(presencial)
   estado      audiencias_estado    @default(vigente)
   usuarioId   Int
   detalles    String?              @db.Text
   informacion String?              @db.Text
+  hora        DateTime             @db.Time(0)
+  usuario     usuarios             @relation(fields: [usuarioId], references: [id])
 }
 
 model intentos {
@@ -36,31 +37,32 @@ model seclos {
   caratula           String   @db.VarChar(255)
   expediente         String   @db.VarChar(100)
   usuarioId          Int
-  fecha              DateTime @default(dbgenerated("(curdate())")) @db.Date
-  hora               DateTime @default(dbgenerated("(curtime())")) @db.Time(0)
+  fecha              DateTime @default(now()) @db.DateTime(0)
   conciliador        String   @db.VarChar(255)
   celularConciliador String   @db.VarChar(20)
   emailConciliador   String   @db.VarChar(255)
   numero             Int      @default(1)
-  hayActa            Boolean  @default(false)
+  hayActa            Int      @default(0) @db.TinyInt
 }
 
 model testigos {
-  id          Int     @id @default(autoincrement())
-  nombre      String  @db.VarChar(255)
-  apellido    String  @db.VarChar(255)
-  celular     String  @db.VarChar(20)
-  email       String  @db.VarChar(255)
+  id          Int        @id @default(autoincrement())
+  nombre      String     @db.VarChar(255)
+  apellido    String     @db.VarChar(255)
+  celular     String     @db.VarChar(20)
+  email       String     @db.VarChar(255)
   audienciaId Int
-  BR          Boolean @default(false)
-  dificil     Boolean @default(false)
+  BR          Boolean    @default(false)
+  dificil     Boolean    @default(false)
+  audiencia   audiencias @relation(fields: [audienciaId], references: [id])
 }
 
 model usuarios {
-  id     Int    @id @default(autoincrement())
-  nombre String @unique(map: "nombre") @db.VarChar(255)
-  hash   String @db.VarChar(255)
-  nivel  Int    @default(1)
+  id         Int          @id @default(autoincrement())
+  nombre     String       @unique(map: "nombre") @db.VarChar(255)
+  hash       String       @db.VarChar(255)
+  nivel      Int          @default(1)
+  audiencias audiencias[]
 }
 
 enum audiencias_modalidad {

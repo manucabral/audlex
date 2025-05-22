@@ -1,29 +1,47 @@
 import { redirect } from "next/navigation";
-import { obtenerSesion } from "../../../prisma/servicio.auth";
-
+import type { Metadata } from "next";
+import {
+  obtenerUsuarios,
+  type Usuario,
+} from "../../../prisma/servicio.usuarios";
+import {
+  obtenerTestigosAudiencia,
+  type Testigo,
+} from "../../../prisma/servicio.testigos";
 import {
   obtenerAudiencias,
   type FiltroAudiencia,
   type Audiencia,
 } from "../../../prisma/servicio.audiencias";
+import { obtenerSesion, type Sesion } from "../../../prisma/servicio.auth";
 import FormularioFiltros from "./components/FormularioFiltros";
-import ListaAudiencias from "./components/ListaAudiencias";
 import BotonNuevaAudiencia from "./components/BotonNuevaAudiencia";
 import CerrarSesionButton from "./components/BotonCerrarSesion";
-import type { Metadata } from "next";
+import ListaAudiencias from "./components/ListaAudiencias";
+import { obtenerFechaCorrecta, obtenerHoraCorrecta } from "@/utils/date";
 
 export const metadata: Metadata = {
   title: "Panel de Control",
   description: "Gestión de audiencias y testimonios judiciales.",
 };
 
-type Props = {
-  searchParams: Promise<Partial<Record<keyof FiltroAudiencia, string>>>;
+export type AudienciaDTO = Omit<
+  Audiencia,
+  "fecha" | "hora" | "detalles" | "informacion"
+> & {
+  fecha: string;
+  hora: string;
+  detalles: string | null;
+  informacion: string | null;
+  testigos: Testigo[];
 };
 
-export default async function PanelPage({ searchParams }: Props) {
+export default async function PanelPage({
+  searchParams,
+}: {
+  searchParams: Promise<Partial<Record<keyof FiltroAudiencia, string>>>;
+}) {
   const allParams = await searchParams;
-
   const {
     fechaDesde,
     fechaHasta,
@@ -36,7 +54,7 @@ export default async function PanelPage({ searchParams }: Props) {
     juzgado,
   } = allParams;
 
-  const sesion = await obtenerSesion();
+  const sesion: Sesion | null = await obtenerSesion();
   if (!sesion) redirect("/");
 
   const filtros: FiltroAudiencia = {
@@ -51,7 +69,19 @@ export default async function PanelPage({ searchParams }: Props) {
     juzgado: juzgado ? Number(juzgado) : undefined,
   };
 
-  const audiencias: Audiencia[] = await obtenerAudiencias(filtros);
+  const audienciasRaw = await obtenerAudiencias(filtros);
+  const usuarios: Usuario[] = await obtenerUsuarios();
+
+  const audienciasMap: AudienciaDTO[] = [];
+  for (const a of audienciasRaw) {
+    const testigos = await obtenerTestigosAudiencia(a.id);
+    audienciasMap.push({
+      ...a,
+      fecha: obtenerFechaCorrecta(new Date(a.fecha)),
+      hora: obtenerHoraCorrecta(new Date(a.hora)),
+      testigos,
+    });
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 text-black">
@@ -63,12 +93,11 @@ export default async function PanelPage({ searchParams }: Props) {
                 Panel de Control
               </h1>
               <p className="mt-1 text-gray-600">
-                ¡Bienvenido,{" "}
-                <span className="font-medium">{sesion.nombre}</span>!
+                Hola, <span className="font-medium">{sesion.nombre}</span>.
               </p>
             </div>
             <div className="mt-4 md:mt-0 flex space-x-3">
-              <BotonNuevaAudiencia />
+              <BotonNuevaAudiencia usuarios={usuarios} />
               <CerrarSesionButton />
               <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <svg
@@ -91,7 +120,13 @@ export default async function PanelPage({ searchParams }: Props) {
           </div>
         </div>
         <FormularioFiltros initial={allParams} />
-        <ListaAudiencias data={audiencias} />
+        <div className="mt-6">
+          <ListaAudiencias
+            audiencias={audienciasMap}
+            usuarios={usuarios}
+            sesion={sesion}
+          />
+        </div>
       </div>
     </main>
   );
