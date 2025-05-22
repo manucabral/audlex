@@ -19,7 +19,6 @@ model audiencias {
   detalles    String?              @db.Text
   informacion String?              @db.Text
   hora        DateTime             @db.Time(0)
-  usuario     usuarios             @relation(fields: [usuarioId], references: [id])
 }
 
 model intentos {
@@ -46,23 +45,21 @@ model seclos {
 }
 
 model testigos {
-  id          Int        @id @default(autoincrement())
-  nombre      String     @db.VarChar(255)
-  apellido    String     @db.VarChar(255)
-  celular     String     @db.VarChar(20)
-  email       String     @db.VarChar(255)
+  id          Int     @id @default(autoincrement())
+  nombre      String  @db.VarChar(255)
+  apellido    String  @db.VarChar(255)
+  celular     String  @db.VarChar(20)
+  email       String  @db.VarChar(255)
   audienciaId Int
-  BR          Boolean    @default(false)
-  dificil     Boolean    @default(false)
-  audiencia   audiencias @relation(fields: [audienciaId], references: [id])
+  BR          Boolean @default(false)
+  dificil     Boolean @default(false)
 }
 
 model usuarios {
-  id         Int          @id @default(autoincrement())
-  nombre     String       @unique(map: "nombre") @db.VarChar(255)
-  hash       String       @db.VarChar(255)
-  nivel      Int          @default(1)
-  audiencias audiencias[]
+  id     Int    @id @default(autoincrement())
+  nombre String @unique(map: "nombre") @db.VarChar(255)
+  hash   String @db.VarChar(255)
+  nivel  Int    @default(1)
 }
 
 enum audiencias_modalidad {

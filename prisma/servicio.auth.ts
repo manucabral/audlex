@@ -70,8 +70,6 @@ export async function obtenerSesion(): Promise<Sesion | null> {
       nivel: datos.nivel,
     };
   } catch {
-    const cs = await cookies();
-    cs.delete("token");
     return null;
   }
 }
