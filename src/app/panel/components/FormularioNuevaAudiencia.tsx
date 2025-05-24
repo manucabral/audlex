@@ -7,10 +7,23 @@ import type { Usuario } from "../../../../prisma/servicio.usuarios";
 import { startTransition, useState } from "react";
 import { intentarCrearNuevaAudiencia, intentarCrearTestigo } from "../actions";
 import toast from "react-hot-toast";
-import { X, Plus, Trash2 } from "lucide-react";
+import {
+  X,
+  Plus,
+  Trash2,
+  Calendar,
+  Clock,
+  User,
+  Building,
+  Users,
+  FileText,
+  Info,
+  UserPlus,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 
 type FormAudiencia = Omit<Audiencia, "id">;
-
 type TestigoForm = Omit<Testigo, "id" | "audienciaId">;
 
 export default function FormularioNuevaAudiencia({
@@ -40,7 +53,7 @@ export default function FormularioNuevaAudiencia({
   });
 
   // Estado para almacenar la hora como string (HH:MM)
-  const [horaString, setHoraString] = useState<string>("00:00");
+  const [horaString, setHoraString] = useState<string>("09:00");
 
   // Estado para los testigos
   const [testigos, setTestigos] = useState<TestigoForm[]>([]);
@@ -61,16 +74,12 @@ export default function FormularioNuevaAudiencia({
     const { name, value } = e.target;
 
     if (name === "fecha") {
-      // Para la fecha, creamos un nuevo objeto Date a partir del valor del input
       const newDate = new Date(value);
       if (!isNaN(newDate.getTime())) {
         setFormData((prev) => ({ ...prev, fecha: newDate }));
       }
     } else if (name === "hora") {
-      // Guardamos la hora como string para enviarla al servidor
       setHoraString(value);
-
-      // También actualizamos el objeto Date para mantener la consistencia interna
       const [hours, minutes] = value.split(":").map(Number);
       const newDate = new Date();
       newDate.setHours(hours, minutes, 0, 0);
@@ -123,10 +132,12 @@ export default function FormularioNuevaAudiencia({
       celular: "",
       dificil: false,
     });
+    toast.success("Testigo agregado correctamente");
   };
 
   const removeTestigo = (index: number) => {
     setTestigos((prev) => prev.filter((_, i) => i !== index));
+    toast.success("Testigo eliminado");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,10 +152,8 @@ export default function FormularioNuevaAudiencia({
 
     startTransition(async () => {
       try {
-        // Crear una copia del formData para modificar la hora
         const formDataToSubmit = {
           ...formData,
-          // Enviamos la hora como string en formato HH:MM
           hora: horaString,
         };
 
@@ -155,7 +164,7 @@ export default function FormularioNuevaAudiencia({
         for (const t of testigos) {
           const { exito: exitoTestigo, mensaje: mensajeTestigo } =
             await intentarCrearTestigo({
-              ...t, // excluyendo obviamente el id.
+              ...t,
               audienciaId: informacion,
             });
           if (!exitoTestigo) throw new Error(mensajeTestigo);
@@ -177,37 +186,47 @@ export default function FormularioNuevaAudiencia({
 
   const formatDateForInput = (date: Date) => {
     if (!date || isNaN(date.getTime())) {
-      return new Date().toISOString().split("T")[0]; // Valor por defecto si la fecha es inválida
+      return new Date().toISOString().split("T")[0];
     }
     return date.toISOString().split("T")[0];
   };
 
+  const isTestigoFormValid =
+    currentTestigo.nombre && currentTestigo.apellido && currentTestigo.celular;
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-blue-700">
-            Nueva Audiencia
-          </h2>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Plus className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-semibold">Nueva Audiencia</h2>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-6">
-            {/* Sección de datos de audiencia */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="text-md font-medium text-blue-700 mb-4">
-                Datos de la Audiencia
-              </h3>
+        {/* Form Content */}
+        <div className="overflow-y-auto max-h-[calc(95vh-80px)]">
+          <form onSubmit={handleSubmit} className="p-6 space-y-8">
+            {/* Información General */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 text-blue-700 font-medium text-lg border-b border-blue-100 pb-2">
+                <Info className="h-5 w-5" />
+                Información General
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Carátula */}
+                <div className="lg:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Carátula <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -215,13 +234,15 @@ export default function FormularioNuevaAudiencia({
                     name="caratula"
                     value={formData.caratula}
                     onChange={handleAudienciaChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    placeholder="Ingrese la carátula del caso"
                     required
                   />
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                {/* Demandado */}
+                <div className="lg:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Demandado <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -229,20 +250,23 @@ export default function FormularioNuevaAudiencia({
                     name="demandado"
                     value={formData.demandado}
                     onChange={handleAudienciaChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    placeholder="Nombre del demandado"
                     required
                   />
                 </div>
 
+                {/* Usuario Asignado */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <User className="h-4 w-4" />
                     Usuario Asignado <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="usuarioId"
                     value={selectedUsuarioId || ""}
                     onChange={handleAudienciaChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   >
                     <option value="">Seleccione un usuario</option>
@@ -254,8 +278,10 @@ export default function FormularioNuevaAudiencia({
                   </select>
                 </div>
 
+                {/* Juzgado */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <Building className="h-4 w-4" />
                     Juzgado <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -264,48 +290,21 @@ export default function FormularioNuevaAudiencia({
                     value={formData.juzgado}
                     onChange={handleAudienciaChange}
                     min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
 
+                {/* Modalidad */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fecha <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="fecha"
-                    value={formatDateForInput(formData.fecha)}
-                    onChange={handleAudienciaChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Hora <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="time"
-                    name="hora"
-                    value={horaString}
-                    onChange={handleAudienciaChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Modalidad <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="modalidad"
                     value={formData.modalidad}
                     onChange={handleAudienciaChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   >
                     <option value="presencial">Presencial</option>
@@ -314,15 +313,16 @@ export default function FormularioNuevaAudiencia({
                   </select>
                 </div>
 
+                {/* Estado */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Estado <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="estado"
                     value={formData.estado}
                     onChange={handleAudienciaChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   >
                     <option value="vigente">Vigente</option>
@@ -330,55 +330,123 @@ export default function FormularioNuevaAudiencia({
                     <option value="reprogramado">Reprogramado</option>
                   </select>
                 </div>
+              </div>
+            </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+            {/* Programación */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 text-blue-700 font-medium text-lg border-b border-blue-100 pb-2">
+                <Calendar className="h-5 w-5" />
+                Programación
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Fecha */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="h-4 w-4" />
+                    Fecha <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="fecha"
+                    value={formatDateForInput(formData.fecha)}
+                    onChange={handleAudienciaChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    required
+                  />
+                </div>
+
+                {/* Hora */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <Clock className="h-4 w-4" />
+                    Hora <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    name="hora"
+                    value={horaString}
+                    onChange={handleAudienciaChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Descripción */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 text-blue-700 font-medium text-lg border-b border-blue-100 pb-2">
+                <FileText className="h-5 w-5" />
+                Descripción
+              </div>
+
+              <div className="space-y-6">
+                {/* Información */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Información adicional
                   </label>
                   <textarea
                     name="informacion"
                     value={formData.informacion || ""}
                     onChange={handleAudienciaChange}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  ></textarea>
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                    placeholder="Información adicional sobre la audiencia..."
+                  />
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                {/* Detalles */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Detalles
                   </label>
                   <textarea
                     name="detalles"
                     value={formData.detalles || ""}
                     onChange={handleAudienciaChange}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  ></textarea>
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                    placeholder="Detalles específicos del caso..."
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Sección de testigos */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-md font-medium text-blue-700">
+            {/* Testigos */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-blue-700 font-medium text-lg border-b border-blue-100 pb-2">
+                  <Users className="h-5 w-5" />
                   Testigos ({testigos.length}/6)
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {testigos.length >= 6 ? "Límite alcanzado" : "Opcional"}
-                </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  {testigos.length >= 6 ? (
+                    <span className="flex items-center gap-1 text-amber-600">
+                      <AlertCircle className="h-4 w-4" />
+                      Límite alcanzado
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">Opcional</span>
+                  )}
+                </div>
               </div>
 
               {/* Formulario para agregar testigo */}
               {testigos.length < 6 && (
-                <div className="bg-white p-4 rounded-md border border-gray-200 mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">
-                    Agregar nuevo testigo
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
+                  <div className="flex items-center gap-2 mb-4">
+                    <UserPlus className="h-5 w-5 text-blue-600" />
+                    <h4 className="font-medium text-blue-700">
+                      Agregar nuevo testigo
+                    </h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Nombre <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -386,12 +454,13 @@ export default function FormularioNuevaAudiencia({
                         name="nombre"
                         value={currentTestigo.nombre}
                         onChange={handleTestigoChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="Nombre del testigo"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Apellido <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -399,109 +468,104 @@ export default function FormularioNuevaAudiencia({
                         name="apellido"
                         value={currentTestigo.apellido}
                         onChange={handleTestigoChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="Apellido del testigo"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email
                       </label>
                       <input
                         type="email"
                         name="email"
                         value={currentTestigo.email}
                         onChange={handleTestigoChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="correo@ejemplo.com"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Celular
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Celular <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
                         name="celular"
                         value={currentTestigo.celular}
                         onChange={handleTestigoChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="Número de celular"
                       />
                     </div>
+                  </div>
 
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                      <label className="flex items-center gap-2 text-sm">
                         <input
                           type="checkbox"
-                          id="BR"
                           name="BR"
                           checked={currentTestigo.BR}
                           onChange={handleTestigoChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label
-                          htmlFor="BR"
-                          className="ml-2 block text-sm text-gray-700"
-                        >
-                          BR
-                        </label>
-                      </div>
+                        <span className="text-gray-700">BR</span>
+                      </label>
 
-                      <div className="flex items-center">
+                      <label className="flex items-center gap-2 text-sm">
                         <input
                           type="checkbox"
-                          id="dificil"
                           name="dificil"
                           checked={currentTestigo.dificil}
                           onChange={handleTestigoChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label
-                          htmlFor="dificil"
-                          className="ml-2 block text-sm text-gray-700"
-                        >
-                          Difícil
-                        </label>
-                      </div>
+                        <span className="text-gray-700">Difícil</span>
+                      </label>
                     </div>
 
-                    <div className="md:col-span-2 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={addTestigo}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Agregar Testigo
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={addTestigo}
+                      disabled={!isTestigoFormValid}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Agregar Testigo
+                    </button>
                   </div>
                 </div>
               )}
 
               {/* Lista de testigos */}
               {testigos.length > 0 ? (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+                <div className="space-y-3">
                   {testigos.map((testigo, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between bg-white p-3 rounded-md border border-gray-200"
+                      className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                     >
-                      <div>
-                        <div className="font-medium">
-                          {testigo.nombre} {testigo.apellido}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <span className="font-medium text-gray-900">
+                            {testigo.nombre} {testigo.apellido}
+                          </span>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {testigo.email}
+                        <div className="text-sm text-gray-600 mb-2">
+                          {testigo.email} • {testigo.celular}
                         </div>
-                        <div className="flex space-x-2 mt-1">
+                        <div className="flex gap-2">
                           {testigo.BR && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
+                            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">
                               BR
                             </span>
                           )}
                           {testigo.dificil && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">
+                            <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700 font-medium">
                               Difícil
                             </span>
                           )}
@@ -510,7 +574,7 @@ export default function FormularioNuevaAudiencia({
                       <button
                         type="button"
                         onClick={() => removeTestigo(index)}
-                        className="text-red-500 hover:text-red-700"
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -518,57 +582,46 @@ export default function FormularioNuevaAudiencia({
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4 text-gray-500 text-sm">
-                  No hay testigos agregados
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No hay testigos agregados</p>
+                  <p className="text-sm">
+                    Los testigos son opcionales para esta audiencia
+                  </p>
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              disabled={loading}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Guardando...
-                </span>
-              ) : (
-                "Guardar Audiencia"
-              )}
-            </button>
-          </div>
-        </form>
+            {/* Botones */}
+            <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors font-medium"
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Crear Audiencia
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

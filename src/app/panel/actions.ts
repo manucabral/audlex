@@ -2,12 +2,15 @@
 import { cookies } from "next/headers";
 import {
   crearNuevoTestigo,
+  editarTestigo,
   type Testigo,
 } from "../../../prisma/servicio.testigos";
 import {
   crearNuevaAudiencia,
+  editarAudiencia,
   eliminarAudiencia,
   type Audiencia,
+  type AudienciaModificada,
 } from "../../../prisma/servicio.audiencias";
 
 export async function cerrarSesion(): Promise<{ exito: boolean }> {
@@ -42,6 +45,26 @@ export async function intentarCrearNuevaAudiencia(datos: Audiencia) {
   } catch (error) {
     if (error instanceof Error) return { exito: false, mensaje: error.message };
     return { exito: false, mensaje: "Error al intentar crear audiencia" };
+  }
+}
+
+export async function intentarActualizarAudiencia(datos: AudienciaModificada) {
+  try {
+    if (!datos.id)
+      return { exito: false, mensaje: "ID de audiencia no proporcionado" };
+    if (datos.testigosModificados && datos.testigos)
+      for (const testigo of datos.testigos)
+        if ("modificado" in testigo && testigo.modificado)
+          await editarTestigo(testigo.id, testigo);
+    const nuevo = await editarAudiencia(datos.id, datos);
+    return {
+      exito: true,
+      mensaje: `Audiencia actualizada con éxito ${nuevo}`,
+      informacion: nuevo,
+    };
+  } catch (error) {
+    if (error instanceof Error) return { exito: false, mensaje: error.message };
+    return { exito: false, mensaje: "Error al intentar actualizar audiencia" };
   }
 }
 

@@ -1,6 +1,4 @@
 "use client";
-
-import Link from "next/link";
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +19,7 @@ import type { AudienciaDTO } from "../page";
 import type { Usuario } from "../../../../prisma/servicio.usuarios";
 import type { Sesion } from "../../../../prisma/servicio.auth";
 import { intentarEliminarAudiencia } from "../actions";
+import FormularioEditarAudiencia from "./FormularioEditarAudiencia";
 import toast from "react-hot-toast";
 
 export default function ListaAudiencias({
@@ -36,8 +35,11 @@ export default function ListaAudiencias({
   const [sortField, setSortField] = useState<keyof AudienciaDTO>("fecha");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [editarAudiencia, setEditarAudiencia] = useState<AudienciaDTO | null>(
+    null
+  );
 
-  // Filtrar audiencias según el nivel de usuario
+  // Se filtran audiencias según el nivel de usuario
   const audienciasFiltradas =
     sesion.nivel > 1
       ? audiencias
@@ -145,6 +147,17 @@ export default function ListaAudiencias({
             expandedId !== null ? "bg-gray-600/30" : ""
           }`}
         >
+          {editarAudiencia && (
+            <FormularioEditarAudiencia
+              initialData={editarAudiencia}
+              usuarios={usuarios}
+              onClose={() => setEditarAudiencia(null)}
+              onSave={() => {
+                setEditarAudiencia(null);
+                router.refresh();
+              }}
+            />
+          )}
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-blue-50">
               <tr>
@@ -297,23 +310,24 @@ export default function ListaAudiencias({
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex justify-center space-x-3">
-                          {(sesion.nivel > 1 ||
+                          {/* Solo si el usuario tiene nivel 3 o superior */}
+                          {(sesion.nivel > 2 ||
                             audiencia.usuarioId === sesion._id) && (
                             <>
-                              <Link
-                                href={`/panel/audiencia/editar/${audiencia.id}`} // TODO:
+                              <Edit
                                 className="text-gray-800 hover:text-blue-700 transition-colors"
-                                title="Editar audiencia"
-                              >
-                                <Edit className="h-6 w-6" />
-                              </Link>
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditarAudiencia(audiencia);
+                                }}
+                              />
 
-                              {sesion.nivel > 1 && (
+                              {sesion.nivel > 2 && (
                                 <button
                                   onClick={() =>
                                     eliminarAudiencia(audiencia.id as number)
                                   }
-                                  className="text-red-500 hover:text-red-700 transition-colors"
+                                  className="text-red-500 hover:text-red-700 transition-colors hover:cursor-pointer"
                                   title="Eliminar audiencia"
                                 >
                                   <Trash2 className="h-6 w-6" />

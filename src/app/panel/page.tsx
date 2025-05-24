@@ -6,6 +6,7 @@ import {
 } from "../../../prisma/servicio.usuarios";
 import {
   obtenerTestigosAudiencia,
+  type TestigoModificado,
   type Testigo,
 } from "../../../prisma/servicio.testigos";
 import {
@@ -18,6 +19,7 @@ import FormularioFiltros from "./components/FormularioFiltros";
 import BotonNuevaAudiencia from "./components/BotonNuevaAudiencia";
 import CerrarSesionButton from "./components/BotonCerrarSesion";
 import ListaAudiencias from "./components/ListaAudiencias";
+import BotonExportar from "./components/BotonExportar";
 import { obtenerFechaCorrecta, obtenerHoraCorrecta } from "@/utils/date";
 
 export const metadata: Metadata = {
@@ -33,7 +35,7 @@ export type AudienciaDTO = Omit<
   hora: string;
   detalles: string | null;
   informacion: string | null;
-  testigos: Testigo[];
+  testigos: Testigo[] | TestigoModificado[];
 };
 
 export default async function PanelPage({
@@ -72,7 +74,7 @@ export default async function PanelPage({
   const audienciasRaw = await obtenerAudiencias(filtros);
   const usuarios: Usuario[] = await obtenerUsuarios();
 
-  const audienciasMap: AudienciaDTO[] = [];
+  let audienciasMap: AudienciaDTO[] = [];
   for (const a of audienciasRaw) {
     const testigos = await obtenerTestigosAudiencia(a.id);
     audienciasMap.push({
@@ -81,6 +83,17 @@ export default async function PanelPage({
       hora: obtenerHoraCorrecta(new Date(a.hora)),
       testigos,
     });
+  }
+
+  if (filtros.testigo) {
+    const aBuscarTestigo = filtros.testigo.toLowerCase();
+    audienciasMap = audienciasMap.filter((a) =>
+      a.testigos.some(
+        (t) =>
+          t.nombre.toLowerCase().includes(aBuscarTestigo) ||
+          t.apellido.toLowerCase().includes(aBuscarTestigo)
+      )
+    );
   }
 
   return (
@@ -97,25 +110,9 @@ export default async function PanelPage({
               </p>
             </div>
             <div className="mt-4 md:mt-0 flex space-x-3">
-              <BotonNuevaAudiencia usuarios={usuarios} />
+              {sesion.nivel > 1 && <BotonNuevaAudiencia usuarios={usuarios} />}
               <CerrarSesionButton />
-              <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
-                Exportar
-              </button>
+              <BotonExportar audiencias={audienciasMap} usuarios={usuarios} />
             </div>
           </div>
         </div>

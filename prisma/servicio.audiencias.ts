@@ -1,6 +1,7 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { obtenerUsuarioPorNombre } from "./servicio.usuarios";
-const prisma = new PrismaClient();
+import type { Testigo, TestigoModificado } from "./servicio.testigos";
+import { prisma } from "./init";
 
 type AudienciaBase = {
   usuario: string;
@@ -29,6 +30,22 @@ export type Audiencia = {
   estado: "vigente" | "terminado" | "reprogramado";
   detalles?: string;
   informacion?: string;
+};
+
+export type AudienciaModificada = {
+  id?: number;
+  caratula: string;
+  demandado: string;
+  fecha: Date | string;
+  hora: Date | string;
+  juzgado: number;
+  usuarioId: number;
+  modalidad: "virtual" | "semipresencial" | "presencial";
+  estado: "vigente" | "terminado" | "reprogramado";
+  detalles: string;
+  informacion: string;
+  testigos?: TestigoModificado[] | Testigo[];
+  testigosModificados?: boolean;
 };
 
 async function obtenerAudiencias(filtros: FiltroAudiencia) {
@@ -100,6 +117,31 @@ async function crearNuevaAudiencia(datos: Audiencia) {
   }
 }
 
+async function editarAudiencia(id: number, datos: AudienciaModificada) {
+  try {
+    const nuevafecha = new Date(datos.fecha);
+    const isoString = `1970-01-01T${datos.hora}:00.000Z`;
+    const nuevo = await prisma.audiencias.update({
+      where: { id },
+      data: {
+        usuarioId: Number(datos.usuarioId),
+        caratula: datos.caratula,
+        fecha: nuevafecha,
+        hora: new Date(isoString),
+        modalidad: datos.modalidad,
+        estado: datos.estado,
+        demandado: datos.demandado,
+        detalles: datos.detalles,
+        informacion: datos.informacion,
+        juzgado: datos.juzgado,
+      },
+    });
+    return nuevo;
+  } catch (error) {
+    console.error("Error al editar audiencia:", error);
+  }
+}
+
 async function eliminarAudiencia(id: number) {
   try {
     const nuevo = await prisma.audiencias.delete({
@@ -112,4 +154,9 @@ async function eliminarAudiencia(id: number) {
   }
 }
 
-export { obtenerAudiencias, crearNuevaAudiencia, eliminarAudiencia };
+export {
+  obtenerAudiencias,
+  crearNuevaAudiencia,
+  editarAudiencia,
+  eliminarAudiencia,
+};
