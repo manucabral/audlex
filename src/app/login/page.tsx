@@ -42,7 +42,7 @@ export default function LoginPage() {
               Iniciar sesión
             </h2>
 
-            <form action={handleSubmit} className="space-y-5">
+            <form action={handleSubmit} className="space-y-5 text-black">
               <div>
                 <label
                   htmlFor="username"
