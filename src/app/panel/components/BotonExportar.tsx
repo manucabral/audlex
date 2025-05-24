@@ -27,7 +27,7 @@ export default function BotonExportar({
     contenido += `${audiencia.fecha}\n`;
     contenido += `${audiencia.hora} J${audiencia.juzgado} ${audiencia.caratula} ** ${nombreUsuario}\n\n`;
     if (audiencia.testigos && audiencia.testigos.length > 0) {
-      audiencia.testigos.forEach((testigo, _) => {
+      audiencia.testigos.forEach((testigo) => {
         const marcadores = [];
         contenido += `${testigo.nombre} ${testigo.apellido}`;
         if (testigo.celular) contenido += `${testigo.celular}`;
