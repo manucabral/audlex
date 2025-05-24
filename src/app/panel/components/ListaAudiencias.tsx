@@ -280,7 +280,6 @@ export default function ListaAudiencias({
                               {audiencia.modalidad}
                             </span>
                           </div>
-                          {/* Información de testigos movida a la columna de modalidad */}
                           <div className="flex items-center mt-2 text-base text-gray-800">
                             <Users className="h-5 w-5 mr-1" />
                             <span className="font-medium">
@@ -302,7 +301,7 @@ export default function ListaAudiencias({
                             audiencia.usuarioId === sesion._id) && (
                             <>
                               <Link
-                                href={`/panel/audiencia/editar/${audiencia.id}`}
+                                href={`/panel/audiencia/editar/${audiencia.id}`} // TODO:
                                 className="text-gray-800 hover:text-blue-700 transition-colors"
                                 title="Editar audiencia"
                               >
@@ -435,7 +434,7 @@ export default function ListaAudiencias({
                                         <div className="mt-2 flex flex-wrap gap-2">
                                           {testigo.BR && (
                                             <span className="px-2 py-0.5 text-sm rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                                              BR
+                                              Bajo Responsabilidad
                                             </span>
                                           )}
                                           {testigo.dificil && (
